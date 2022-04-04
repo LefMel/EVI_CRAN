@@ -1,0 +1,9 @@
+^EVI\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+
+local
+notebooks
+releases
+reports
+^data-raw$

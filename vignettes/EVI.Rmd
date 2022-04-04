@@ -1,0 +1,99 @@
+---
+title: "EVI"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{EVI}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo=FALSE, include=FALSE}
+library(EVI)
+```
+
+# Epidemic Volatility Index (EVI) Explained
+
+This document aims to provide a short introduction to running the EVI tool, by illustrating a simple example.
+
+## Loading data 
+
+For illustration purposes we use the cases of the first 149 days of the COVID-19 pandemic in Italy.
+
+A data frame containing the number of cases for the first 149 days of the COVID-19 pandemic can be stored in R running:
+```{r, results='hide'}
+data("Italy")
+```
+
+For each day the number of COVID-19 cases are recorded in the data frame. 
+
+## Running the deviant() function
+
+The deviant() function is the main function of the EVI-package that is used to analyze a time series of observed cases per unit of time (ideally per day).
+
+The following call of deviant() runs the EVI tool and returns a data frame named **EVI_output** that stores for each time point:
+* Dates: the date for each time point (with origin 01-01-1970)
+* Days: the serial number for each time point
+* Cases: the rolling average of the newly observed cases for each time point
+* Index: takes values 1 or 0 for the issuance of an early warning or not, respectively
+* ppv: the positive predictive value for each time point
+* npv: the negative predictive value for each time point
+* lag_all: the selected rolling window size for EVI calculation for each time point
+* c_all: the selected cut-off for issuing an early warning for each time point
+* se_all: the sensitivity (Se) of EVI up to this time point
+* sp_all: the specificity (Sp) of EVI up to this time point
+
+Let run the deviant() function for the first 49 days.
+
+```{r, results="hide"}
+deviant(new_cases = Italy$Cases[1:49], cum = FALSE, r_a = 7, r = 0.2, lag_max = 30)
+```
+
+## Updater function
+
+Once the deviant() function has been used to analyze the already observed time series, the deviant_update() function is used to obtain the EVI output and issue early warnings for the new cases that are recorded. After running the deviant_update() function the output of the deviant() function (*EVI_output*) is also updated with a new row of data for each newly observed time point.
+
+Assuming that we have first observed only the 49 cases from the Italian data and we have run the deviant() function on these cases.
+
+Later when the number of cases for the next day (in our example: day 50) are observed we want to obtain the estimates for this day without having to reanalyze the entire time series. This is done by using the deviant_update() function:
+```{r, results="hide"}
+deviant_update(new_cases=Italy$Cases[1:50], cum=FALSE, r_a=7, r=0.2, lag_max=30)
+```
+
+By running the deviant_update() function the output of the deviant() function is updated by adding an additional row with estimates for the new data.
+In this example the EVI_output file will now have 149 rows. If two additional days are analyzed two additional rows will be added and so on.
+
+## Plot the EVI_output
+
+Three main types of plots can be generated:
+* A plot of the confirmed cases with red dots corresponding to time points that an early warning was issued and grey dots corresponding to time points without an early warning indication.
+* A plot of the confirmed cases with colored dots corresponding to time points with an early warning. Color intensity is increasing with higher positive predictive value (PPV).
+* A plot of the confirmed cases with colored dots corresponding to time points without an early warning. Color intensity is increasing with higher negative predictive value (NPV).
+
+For the eVI.graphs() function to run an EVI_output is required as input, derived from the deviant() or deviant_update() functions.
+
+```{r, results="hide", include=FALSE}
+evi.graphs(EVI_output=EVI_output, graph="EVI", ln=T) # confirmed cases plotted on the logarithmic scale
+evi.graphs(EVI_output=EVI_output, graph="PPV", ln=F) # Positive predictive value plotted on the original scale
+evi.graphs(EVI_output=EVI_output, graph="NPV", ln=T) # Negative predictive value plotted on the logarithmic scale
+evi.graphs(EVI_output=EVI_output, graph="EVI", ln=T, type="l") # confirmed cases plotted on the logarithmic scale with lines on top of points
+```
+
+## Full example
+
+You can run the deviant() function for the all the observed COVID-19 cases from the first 149 days of the pandemic.
+ 
+```{r, results="hide", eval=FALSE}
+deviant(new_cases = Italy$Cases, cum = FALSE, r_a = 7, r = 0.2, lag_max = 30)
+```
+
+## Citation
+
+```{r}
+citation("EVI")
+```
+
+## This vignette was built with:
+
+```{r}
+sessionInfo()
+```
